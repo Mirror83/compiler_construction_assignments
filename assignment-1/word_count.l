@@ -40,6 +40,8 @@ int main(int argc, char **argv)
             break;
 
         word_count++;
+        
+        // The word size is calculated in bytes
         int word_size = sizeof(char) * strlen(yytext);
         printf("%-30s\t%-d\n", yytext, word_size);
         total_word_size += word_size;
