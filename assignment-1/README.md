@@ -1,4 +1,8 @@
-# ICS 2401 Compiler Construction - Assignment 1
+# Compiler Construction Assignments
+
+## Assignments
+
+### Assignment 1
 
 1. Write a LEX specification files:
 
@@ -19,7 +23,7 @@ _has have had go_
 
 Write a simple LEX specification to recognize these verbs
 
-# Getting started
+## Getting started
 
 Currently (for the first assignment), the build process is managed using a Makefile, and that means that
 the instructions below will only work on Unix-like systems (i.e. not Windows, except through [WSL](https://learn.microsoft.com/en-us/windows/wsl/about)). We can move to [CMake](https://cmake.org/) later to allow for platform-agnostic build management.
@@ -59,3 +63,8 @@ or you can use the make targets with the default files. There is currently only 
 ```bash
 make run_word_count  # For the first part of question 1
 ```
+
+### Useful Resources
+
+- [Makefile tutorial](https://makefiletutorial.com)
+- [Introduction to Compilers and Language Design](https://www3.nd.edu/~dthain/compilerbook/)
