@@ -20,5 +20,5 @@ ${BUILD_FOLDER}/verbs: verbs.l
 # Runs the executable built from the word_count.l LEX specification
 # on the word_count.txt sample
 run_word_count: ${BUILD_FOLDER}/word_count
-	${BUILD_FOLDER}/word_count text-samples/word_count.txt
+	${BUILD_FOLDER}/word_count text-samples/word-count.txt
 
