@@ -24,7 +24,7 @@ int main(int argc, char **argv)
         printf("Could not open file: %s!\n", file_name);
         return 1;
     }
-
+    
     yylex();
     
     fclose(yyin);
