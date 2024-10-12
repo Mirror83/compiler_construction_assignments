@@ -13,7 +13,7 @@ ${BUILD_FOLDER}/replacement: replacement.l
 	rm replacement.c
 
 ${BUILD_FOLDER}/verbs: verbs.l
-	lex -o verbs.c verbs.l
+	lex -o verbs.c --yylineno verbs.l
 	gcc verbs.c -o $@
 	rm verbs.c
 
