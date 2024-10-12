@@ -3,11 +3,9 @@
 #include <string.h>
 %}
 
-LETTER ([a-zA-Z])
-
 %%
-(" "|\t|\n) /* skip whitespace */
-({LETTER}+|({LETTER}+\-{LETTER}+)+) { return TOKEN_WORD; }
+abc { printf("ABC"); }
+. { printf(yytext); }
 %%
 
 int main(int argc, char **argv)
@@ -24,10 +22,10 @@ int main(int argc, char **argv)
     if (!yyin)
     {
         printf("Could not open file: %s!\n", file_name);
-        fclose(yyin);
-
         return 1;
     }
+
+    yylex();
     
     fclose(yyin);
 
