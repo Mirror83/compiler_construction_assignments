@@ -4,7 +4,7 @@
 
 ### Assignment 1
 
-1. Write a LEX specification files:
+1. Write a LEX specification file:
 
    - To count the number of words in a file and their total size
    - That accepts the English language words (without bothering for the meaning) and replaces each occurence of the string "abc" in it to "ABC".
@@ -30,6 +30,12 @@ the instructions below will only work on Unix-like systems (i.e. not Windows, ex
 
 This assumes that your machine is set up for C/C++ development.
 
+If not get the packages using the command
+
+```bash
+sudo apt install build-essentials
+```
+
 You should have [Make](https://www.gnu.org/software/make/) installed in your system. You can check this by using the command:
 
 ```bash
@@ -44,6 +50,12 @@ sudo apt install make
 ```
 
 or you can get it from the [Make website](https://www.gnu.org/software/make/#download).
+
+You should also install `flex`, the package for the lexical analyzer:
+
+```bash
+sudo apt install flex
+```
 
 With `make` installed, to build the binaries from the LEX files corresponding to all the questions above:
 
