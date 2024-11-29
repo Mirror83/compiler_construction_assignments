@@ -23,6 +23,15 @@ _has have had go_
 
 Write a simple LEX specification to recognize these verbs
 
+### Assignment 2
+
+1. Using the Recursive Descent Strategy, write a C program for a simple calculator that can be used to perform integer arithmetic involving "+" and "\*". Let your program consist of a set of mutually recursive routines.
+2. Using the follwing grammar,
+   <!-- TODO: Replace ">" with the "produces arrow" -->
+   $$ S > aS | b $$
+   create an interpreter using LEX and YACC which will count the number of a's in the input string.
+3. Write LEX and YACC specification files for a small calculator that can add and subtract numbers.
+
 ## Getting started
 
 Currently (for the first assignment), the build process is managed using a Makefile, and that means that
@@ -79,4 +88,4 @@ make run_word_count  # For the first part of question 1
 ### Useful Resources
 
 - [Makefile tutorial](https://makefiletutorial.com)
-- [Introduction to Compilers and Language Design](https://www3.nd.edu/~dthain/compilerbook/)
+- [Introduction to Compilers and Language Design](https://www3.nd.edu/~dthain/compilerbook/) book
