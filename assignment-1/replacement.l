@@ -1,13 +1,11 @@
 %{
-#include "token.h"
 #include <string.h>
 %}
 
 %%
 abc { printf("ABC"); }
-. { printf(yytext); }
+. { printf("%s", yytext); }
 %%
-
 int main(int argc, char **argv)
 {
     if (argc != 2) {
