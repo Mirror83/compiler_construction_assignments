@@ -1,20 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef enum
-{
-    TOKEN_EOF = 0,
-    TOKEN_PLUS,
-    TOKEN_MULTIPLY,
-    TOKEN_L_BRACKET,
-    TOKEN_R_BRACKET,
-    TOKEN_INT
-} token_t;
-
-#define TRUE 1
-#define FALSE 0
-
+#include <ctype.h>
 /**
  * Here is an implementation of a recursive descent parser for the grammar
  * of a calculator that can perform simple arithmetic involving "+" and "*".
@@ -39,73 +26,156 @@ typedef enum
  * The grammar above is an LL(1) grammar, suitable for recursive descent parsing.
  */
 
+#define TRUE 1
+#define FALSE 0
+#define MAX_TOKENS 256
+
+typedef enum
+{
+    TOKEN_EOF = 0,
+    TOKEN_PLUS,
+    TOKEN_MULTIPLY,
+    TOKEN_L_BRACKET,
+    TOKEN_R_BRACKET,
+    TOKEN_INT
+} token_t;
+
+union TokenVal
+{
+    int intVal;
+    char charVal;
+};
+
+struct Token
+{
+    token_t tokenType;
+    char tokenVal;
+};
+
+int parse_P();
+int parse_E();
+int parse_E_prime();
+int parse_T();
+int parse_T_prime();
+int parse_F();
+
 FILE *input;
 
-int main(int argc, char **argv)
+struct Token tokens[MAX_TOKENS];
+
+/** The current position in the tokens list. */
+int current_pos = -1;
+size_t tokens_size = 0;
+
+void tokenize(char *source, struct Token tokens[])
 {
-    if (argc != 2)
+    int i = 0;
+    while (i < strlen(source))
     {
-        fprintf(stderr, "Usage: plus_multiply_parser file_name\n");
+        struct Token token;
+
+        char c = source[i];
+        if (c == '(')
+        {
+            token.tokenType = TOKEN_L_BRACKET;
+            token.tokenVal = c;
+            tokens[i] = token;
+            tokens_size += 1;
+            i += 1;
+            continue;
+        }
+        if (c == ')')
+        {
+            token.tokenType = TOKEN_R_BRACKET;
+            token.tokenVal = c;
+            tokens[i] = token;
+
+            tokens_size += 1;
+
+            i += 1;
+            continue;
+        }
+        if (c == '+')
+        {
+            token.tokenType = TOKEN_PLUS;
+            token.tokenVal = c;
+            tokens[i] = token;
+
+            tokens_size += 1;
+            i += 1;
+            continue;
+        }
+        if (c == '*')
+        {
+            token.tokenType = TOKEN_MULTIPLY;
+            token.tokenVal = c;
+            tokens[i] = token;
+
+            tokens_size += 1;
+            i += 1;
+            continue;
+        }
+        if (isdigit(c))
+        {
+            // Should be handled differently as
+            // a number can consist of more than one character
+            token.tokenType = TOKEN_INT;
+            token.tokenVal = c;
+            tokens[i] = token;
+
+            tokens_size += 1;
+            i += 1;
+            continue;
+        }
+        if (isspace(c))
+        {
+            i += 1;
+            continue;
+        }
+
+        printf("Unexpected character: %c", c);
         exit(EXIT_FAILURE);
     }
 
-    char *filename = argv[1];
-    input = fopen(filename, "r");
+    struct Token token;
+    token.tokenType = TOKEN_EOF;
+    token.tokenVal = '\0';
+    tokens[i] = token;
+    tokens[++i] = token;
 
-    if (!input)
-    {
-        fprintf(stderr, "Could not open file at %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    int result = parse_P();
-    printf("Parse results: %d", result);
-
-    fclose(input);
-    exit(EXIT_SUCCESS);
+    tokens_size += 1;
+    printf("Token size: %d\n", tokens_size);
 }
 
-/** Returns the next token on the input stream. */
-token_t *scan_token()
+struct Token current_token()
 {
-    char c = fgetc(input);
-    if (c == "*")
+    size_t next_index = current_pos + 1;
+    if (next_index < tokens_size)
     {
-        return TOKEN_MULTIPLY;
-    }
-    else if (c == "+")
-    {
-        return TOKEN_PLUS;
-    }
-    else if (isalnum(c))
-    {
-        return TOKEN_INT;
-    }
-    else if (c == " ")
-    {
-    }
-    else if (c == NULL)
-    {
-        return TOKEN_EOF;
+        struct Token token = tokens[++current_pos];
+        return token;
     }
     else
     {
-        printf("Encountered unexpected token: %s\n", c);
+        printf("Consumed all collected tokens.\n");
         exit(EXIT_FAILURE);
     }
 }
 
 /** Puts an unexpected token back on the input stream,
  *  where it will be read again by the next call to `scan_token` */
-void putback_token(token_t t) {}
+void putback_token()
+{
+    current_pos -= 1;
+}
 
 /** Calls `scan_token` to retrieve the next token.
  * It returns `true` (1) if the token matches the expected type. If not,
  * it puts the token back on the input stream and returns `false` (0).*/
-int expect_token(token_t t)
+int expect_token(token_t token_type)
 {
-    token_t other = scan_token();
-    if (t == other)
+    struct Token other = current_token();
+    if (token_type == other.tokenType)
     {
         return TRUE;
     }
@@ -118,61 +188,136 @@ int expect_token(token_t t)
 
 int parse_P()
 {
-    return parse_E() && expect_token(TOKEN_EOF);
+    int e = parse_E();
+    if (expect_token(TOKEN_EOF) == TRUE)
+    {
+        return e;
+    }
+    else
+    {
+        fprintf(stderr, "Parse error: Expected EOF, got something different.\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 int parse_E()
 {
-    return parse_T() && parse_E_prime();
+    int t = parse_T();
+    int e_prime = parse_E_prime();
+    if (e_prime != FALSE)
+    {
+        return t * e_prime;
+    }
+    else
+    {
+        return t;
+    }
 }
 
 int parse_E_prime()
 {
-    token_t t = scan_token();
-    if (t == TOKEN_PLUS)
+    struct Token t = current_token();
+    if (t.tokenType == TOKEN_PLUS)
     {
-        return parse_T() && parse_E_prime();
+        int t = parse_T();
+        int e_prime = parse_E_prime();
+
+        if (e_prime != FALSE)
+        {
+            return t * e_prime;
+        }
+        else
+        {
+            return t;
+        }
     }
     else
     {
         putback_token(t);
-        return TRUE;
+        return FALSE;
     }
 }
 
 int parse_T()
 {
-    return parse_F() && parse_T_prime();
+    int f = parse_F();
+    int t_prime = parse_T_prime();
+    if (t_prime != FALSE)
+    {
+        return f * t_prime;
+    }
+    else
+    {
+        return f;
+    }
 }
 
 int parse_T_prime()
 {
-    token_t t = scan_token();
-    if (t == TOKEN_MULTIPLY)
+    struct Token t = current_token();
+    if (t.tokenType == TOKEN_MULTIPLY)
     {
-        return parse_F() && parse_T_prime();
+        int f = parse_F();
+        int t_prime = parse_T_prime();
+        if (t_prime != FALSE)
+        {
+            return f * t_prime;
+        }
+        else
+        {
+            return f;
+        }
     }
     else
     {
         putback_token(t);
-        return TRUE;
+        return FALSE;
     }
 }
 
 int parse_F()
 {
-    token_t t = scan_token();
-    if (t == TOKEN_L_BRACKET)
+    struct Token t = current_token();
+    if (t.tokenType == TOKEN_L_BRACKET)
     {
-        return parse_E() && expect_token(TOKEN_R_BRACKET);
+        int e = parse_E();
+        if (expect_token(TOKEN_R_BRACKET))
+        {
+            return e;
+        }
+        else
+        {
+            fprintf(stderr, "Parse Error: Expected ')'\n");
+            exit(EXIT_FAILURE);
+        }
     }
-    else if (t == TOKEN_INT)
+    else if (t.tokenType == TOKEN_INT)
     {
-        return TRUE;
+        int value = atoi(&(t.tokenVal));
+        return value;
     }
     else
     {
-        printf("Parse error: unexpected token %s\n", token_string(t));
-        return FALSE;
+        printf("Parse error: unexpected token %c\n", t.tokenVal);
+        exit(EXIT_FAILURE);
     }
+}
+
+int main(int argc, char **argv)
+{
+    char *program;
+    if (argc == 2)
+    {
+        program = argv[1];
+    }
+    else
+    {
+        program = "(2+2)*7";
+    }
+
+    tokenize(program, tokens);
+    int result = parse_P();
+    printf("Result: %d\n", result);
+
+    exit(EXIT_SUCCESS);
 }
