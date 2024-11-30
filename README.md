@@ -27,8 +27,7 @@ Write a simple LEX specification to recognize these verbs
 
 1. Using the Recursive Descent Strategy, write a C program for a simple calculator that can be used to perform integer arithmetic involving "+" and "\*". Let your program consist of a set of mutually recursive routines.
 2. Using the follwing grammar,
-   <!-- TODO: Replace ">" with the "produces arrow" -->
-   $$ S > aS | b $$
+   $$ S \longrightarrow aS | b $$
    create an interpreter using LEX and YACC which will count the number of a's in the input string.
 3. Write LEX and YACC specification files for a small calculator that can add and subtract numbers.
 
