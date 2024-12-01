@@ -178,7 +178,6 @@ void tokenize(char *source, struct Token tokens[])
     tokens[tokens_size] = token;
 
     tokens_size += 1;
-    printf("Token size: %d\n", tokens_size);
 }
 
 struct Token current_token()
@@ -337,21 +336,36 @@ int parse_F()
     }
 }
 
+void evaluate(char *cmdline)
+{
+    if (strcmp(cmdline, "quit"))
+    {
+        exit(EXIT_SUCCESS);
+    }
+
+    tokenize(cmdline, tokens);
+    int result = parse_P();
+    printf("%d\n", result);
+}
+
 int main(int argc, char **argv)
 {
-    char *program;
-    if (argc == 2)
+    char cmdline[MAX_TOKENS];
+    printf("Recusive descent calculator. (+, and *)\n");
+    printf("---------------------------------------\n");
+    printf("Enter 'quit' to exit.\n\n");
+    while (1)
     {
-        program = argv[1];
-    }
-    else
-    {
-        program = "(1+0)*5";
-    }
+        // Read
+        printf(">> ");
+        fgets(cmdline, MAX_TOKENS, stdin);
+        if (feof(stdin))
+        {
+            exit(EXIT_SUCCESS);
+        }
 
-    tokenize(program, tokens);
-    int result = parse_P();
-    printf("Result: %d\n", result);
-
+        // Evaluate (and print)
+        evaluate(cmdline);
+    }
     exit(EXIT_SUCCESS);
 }
