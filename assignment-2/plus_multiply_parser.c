@@ -29,6 +29,7 @@
 #define TRUE 1
 #define FALSE 0
 #define MAX_TOKENS 256
+#define MAX_INT_LENGTH 10
 
 typedef enum
 {
@@ -42,14 +43,14 @@ typedef enum
 
 union TokenVal
 {
-    int intVal;
+    int intVal; // Store the numbers of an integer as
     char charVal;
 };
 
 struct Token
 {
     token_t tokenType;
-    char tokenVal;
+    union TokenVal tokenVal;
 };
 
 int parse_P();
@@ -70,7 +71,9 @@ size_t tokens_size = 0;
 void tokenize(char *source, struct Token tokens[])
 {
     int i = 0;
-    while (i < strlen(source))
+    size_t source_length = strlen(source);
+
+    while (i < source_length)
     {
         struct Token token;
 
@@ -78,8 +81,8 @@ void tokenize(char *source, struct Token tokens[])
         if (c == '(')
         {
             token.tokenType = TOKEN_L_BRACKET;
-            token.tokenVal = c;
-            tokens[i] = token;
+            token.tokenVal.charVal = c;
+            tokens[tokens_size] = token;
             tokens_size += 1;
             i += 1;
             continue;
@@ -87,8 +90,8 @@ void tokenize(char *source, struct Token tokens[])
         if (c == ')')
         {
             token.tokenType = TOKEN_R_BRACKET;
-            token.tokenVal = c;
-            tokens[i] = token;
+            token.tokenVal.charVal = c;
+            tokens[tokens_size] = token;
 
             tokens_size += 1;
 
@@ -98,8 +101,8 @@ void tokenize(char *source, struct Token tokens[])
         if (c == '+')
         {
             token.tokenType = TOKEN_PLUS;
-            token.tokenVal = c;
-            tokens[i] = token;
+            token.tokenVal.charVal = c;
+            tokens[tokens_size] = token;
 
             tokens_size += 1;
             i += 1;
@@ -108,8 +111,8 @@ void tokenize(char *source, struct Token tokens[])
         if (c == '*')
         {
             token.tokenType = TOKEN_MULTIPLY;
-            token.tokenVal = c;
-            tokens[i] = token;
+            token.tokenVal.charVal = c;
+            tokens[tokens_size] = token;
 
             tokens_size += 1;
             i += 1;
@@ -117,16 +120,38 @@ void tokenize(char *source, struct Token tokens[])
         }
         if (isdigit(c))
         {
+            char intChars[MAX_INT_LENGTH];
+            int j = 0;
+            while (isdigit(c))
+            {
+                if (j < MAX_INT_LENGTH - 1)
+                {
+                    intChars[j] = c;
+                    intChars[j + 1] = '\0';
+                    j += 1;
+                }
+                else
+                {
+                    fprintf(stderr, "Tokenizer error: You have a number that is longer than %d\n", MAX_INT_LENGTH - 1);
+                    exit(EXIT_FAILURE);
+                }
+
+                i += 1;
+                if (i == source_length)
+                    break;
+
+                c = source[i];
+            }
             // Should be handled differently as
             // a number can consist of more than one character
             token.tokenType = TOKEN_INT;
-            token.tokenVal = c;
-            tokens[i] = token;
+            token.tokenVal.intVal = atoi(intChars);
+            tokens[tokens_size] = token;
 
             tokens_size += 1;
-            i += 1;
             continue;
         }
+
         if (isspace(c))
         {
             i += 1;
@@ -139,9 +164,8 @@ void tokenize(char *source, struct Token tokens[])
 
     struct Token token;
     token.tokenType = TOKEN_EOF;
-    token.tokenVal = '\0';
-    tokens[i] = token;
-    tokens[++i] = token;
+    token.tokenVal.charVal = '\0';
+    tokens[tokens_size] = token;
 
     tokens_size += 1;
     printf("Token size: %d\n", tokens_size);
@@ -162,16 +186,15 @@ struct Token current_token()
     }
 }
 
-/** Puts an unexpected token back on the input stream,
- *  where it will be read again by the next call to `scan_token` */
+/** Makes the current token be reconsidered in the next call to `current_token`, */
 void putback_token()
 {
     current_pos -= 1;
 }
 
-/** Calls `scan_token` to retrieve the next token.
- * It returns `true` (1) if the token matches the expected type. If not,
- * it puts the token back on the input stream and returns `false` (0).*/
+/** Calls `current_token` to retrieve the next token, and check if it matches the type given.
+ * Returns `TRUE` if it matches, and `FALSE` otherwise.
+ */
 int expect_token(token_t token_type)
 {
     struct Token other = current_token();
@@ -206,7 +229,7 @@ int parse_E()
     int e_prime = parse_E_prime();
     if (e_prime != FALSE)
     {
-        return t * e_prime;
+        return t + e_prime;
     }
     else
     {
@@ -224,7 +247,7 @@ int parse_E_prime()
 
         if (e_prime != FALSE)
         {
-            return t * e_prime;
+            return t + e_prime;
         }
         else
         {
@@ -293,7 +316,7 @@ int parse_F()
     }
     else if (t.tokenType == TOKEN_INT)
     {
-        int value = atoi(&(t.tokenVal));
+        int value = t.tokenVal.intVal;
         return value;
     }
     else
@@ -312,7 +335,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        program = "(2+2)*7";
+        program = "(10+2)*5";
     }
 
     tokenize(program, tokens);
