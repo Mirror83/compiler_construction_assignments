@@ -53,11 +53,21 @@ struct Token
     union TokenVal tokenVal;
 };
 
+/** Can be either TRUE (1) or FALSE (0) */
+typedef int boolean;
+
+typedef struct ParseVal
+{
+    boolean isEpsilon;
+    // If isEpsilon, the value here does not matter
+    int val;
+} ParseVal;
+
 int parse_P();
 int parse_E();
-int parse_E_prime();
+ParseVal parse_E_prime();
 int parse_T();
-int parse_T_prime();
+ParseVal parse_T_prime();
 int parse_F();
 
 FILE *input;
@@ -195,7 +205,7 @@ void putback_token()
 /** Calls `current_token` to retrieve the next token, and check if it matches the type given.
  * Returns `TRUE` if it matches, and `FALSE` otherwise.
  */
-int expect_token(token_t token_type)
+boolean expect_token(token_t token_type)
 {
     struct Token other = current_token();
     if (token_type == other.tokenType)
@@ -226,10 +236,10 @@ int parse_P()
 int parse_E()
 {
     int t = parse_T();
-    int e_prime = parse_E_prime();
-    if (e_prime != FALSE)
+    ParseVal e_prime = parse_E_prime();
+    if (e_prime.isEpsilon == FALSE)
     {
-        return t + e_prime;
+        return t + e_prime.val;
     }
     else
     {
@@ -237,37 +247,37 @@ int parse_E()
     }
 }
 
-int parse_E_prime()
+ParseVal parse_E_prime()
 {
     struct Token t = current_token();
     if (t.tokenType == TOKEN_PLUS)
     {
         int t = parse_T();
-        int e_prime = parse_E_prime();
+        ParseVal e_prime = parse_E_prime();
 
-        if (e_prime != FALSE)
+        if (e_prime.isEpsilon == FALSE)
         {
-            return t + e_prime;
+            return (ParseVal){FALSE, t + e_prime.val};
         }
         else
         {
-            return t;
+            return (ParseVal){FALSE, t};
         }
     }
     else
     {
         putback_token(t);
-        return FALSE;
+        return (ParseVal){TRUE, 0};
     }
 }
 
 int parse_T()
 {
     int f = parse_F();
-    int t_prime = parse_T_prime();
-    if (t_prime != FALSE)
+    ParseVal t_prime = parse_T_prime();
+    if (t_prime.isEpsilon == FALSE)
     {
-        return f * t_prime;
+        return f * t_prime.val;
     }
     else
     {
@@ -275,26 +285,27 @@ int parse_T()
     }
 }
 
-int parse_T_prime()
+ParseVal parse_T_prime()
 {
     struct Token t = current_token();
     if (t.tokenType == TOKEN_MULTIPLY)
     {
         int f = parse_F();
-        int t_prime = parse_T_prime();
-        if (t_prime != FALSE)
+        ParseVal t_prime = parse_T_prime();
+        if (t_prime.isEpsilon == FALSE)
         {
-            return f * t_prime;
+            ParseVal parseVal = {FALSE, f * t_prime.val};
+            return parseVal;
         }
         else
         {
-            return f;
+            return (ParseVal){FALSE, f};
         }
     }
     else
     {
         putback_token(t);
-        return FALSE;
+        return (ParseVal){TRUE, 0};
     }
 }
 
@@ -335,7 +346,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        program = "(10+2)*5";
+        program = "(1+0)*5";
     }
 
     tokenize(program, tokens);
