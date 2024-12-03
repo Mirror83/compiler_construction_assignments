@@ -16,9 +16,12 @@ void clean_verb(char *s, char *output);
 void print_header();
 
 int verb_count = 0;
+
+
+// The ?:i in the VERB pattern tells it to ignore case such that Is, IS, is, iS etc., will be matched.
 %}
 
-VERB (is|am|are|were|was|be|being|been|do|does|did|will|would|should|can|could|has|have|had|go)
+VERB (?i:is|am|are|were|was|be|being|been|do|does|did|will|would|should|can|could|has|have|had|go)
 WHITESPACE ([ |\t|\n])
 %%
 (^{VERB}{WHITESPACE}|{WHITESPACE}{VERB}{WHITESPACE}) { 
