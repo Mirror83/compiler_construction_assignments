@@ -21,7 +21,7 @@ int verb_count = 0;
 VERB (is|am|are|were|was|be|being|been|do|does|did|will|would|should|can|could|has|have|had|go)
 WHITESPACE ([ |\t|\n])
 %%
-(^{VERB}{WHITESPACE}|{WHITESPACE}+{VERB}{WHITESPACE}+) { 
+(^{VERB}{WHITESPACE}|{WHITESPACE}{VERB}{WHITESPACE}) { 
     clean_verb(yytext, current_result);
 
     int at_end_of_line = yytext[strlen(yytext) - 1] == '\n';
