@@ -1,7 +1,6 @@
 %{
-#include "token.h"
-#include <ctype.h>
-#include <string.h>
+#include <ctype.h>  // For `isspace`
+#include <string.h> // For `strlen` 
 
 // The longest verb in the list is "should" with 6 characters
 #define MAX_VERB_LENGTH 6
@@ -12,11 +11,11 @@
 */
 char current_result[MAX_VERB_LENGTH + 1];
 
+/** Copies the letters of the verb in s into output without whitespace characters e.g '\t' or '\n'. */
 void clean_verb(char *s, char *output);
 void print_header();
 
 int verb_count = 0;
-
 
 // The ?:i in the VERB pattern tells it to ignore case such that Is, IS, is, iS etc., will be matched.
 %}
@@ -26,10 +25,16 @@ WHITESPACE ([ |\t|\n])
 %%
 (^{VERB}{WHITESPACE}|{WHITESPACE}{VERB}{WHITESPACE}) { 
     clean_verb(yytext, current_result);
+    int at_end_of_line = yytext[strlen(yytext) - 1] == '\n';  // Result will be either 1 (True) or 0 (false)
 
-    int at_end_of_line = yytext[strlen(yytext) - 1] == '\n';
+    // yylineno is increased when a "\n" is encountered, so
+    // the actual matched line will be 1 more than the actual line if 
+    // a verb that occurs at the end of a line is encountered.
+    // The arithmetic here accounts for the above behaviour, and finds the appropriate
+    // matched line.
+    int matched_line = at_end_of_line ? yylineno - 1 : yylineno;
 
-    printf("%-d\t%-s\n", at_end_of_line ? yylineno - 1 : yylineno, current_result);
+    printf("%-d\t%-s\n", matched_line, current_result);
     verb_count++; 
 }
 \n ;
@@ -69,7 +74,6 @@ void print_header() {
     printf("----\t----\n");
 }
 
-/** Copies the letters of the verb in s into output without whitespace characters e.g '\t' or '\n'. */
 void clean_verb(char *s, char *output) {
     char *copy = s;
 
