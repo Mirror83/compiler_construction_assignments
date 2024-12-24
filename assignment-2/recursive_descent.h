@@ -26,57 +26,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "token.h"
 
-#define TRUE 1
-#define FALSE 0
-#define MAX_TOKENS 256
 #define MAX_INT_LENGTH 10
-
-typedef enum
-{
-    TOKEN_EOF = 0,
-    TOKEN_PLUS,
-    TOKEN_MULTIPLY,
-    TOKEN_L_BRACKET,
-    TOKEN_R_BRACKET,
-    TOKEN_INT
-} token_t;
-
-union TokenVal
-{
-    int intVal; // Store the numbers of an integer as is
-    char charVal;
-};
-
-struct Token
-{
-    token_t tokenType;
-    union TokenVal tokenVal;
-};
-
-/** Can be either TRUE (1) or FALSE (0) */
-typedef int boolean;
 
 typedef struct ParseVal
 {
-    boolean isEpsilon;
-    int val; // If isEpsilon is TRUE, the value here does not matter
+    boolean is_epsilon;
+    int val; // If is_epsilon is TRUE, the value here does not matter
 } ParseVal;
 
-int parse_P();
-int parse_E();
-ParseVal parse_E_prime();
-int parse_T();
-ParseVal parse_T_prime();
-int parse_F();
+int parse_P(TokenList *token_list);
+int parse_E(TokenList *token_list);
+ParseVal parse_E_prime(TokenList *token_list);
+int parse_T(TokenList *token_list);
+ParseVal parse_T_prime(TokenList *token_list);
+int parse_F(TokenList *token_list);
 
-struct Token tokens[MAX_TOKENS];
-
-/** The current position in the tokens list. */
-int current_pos = -1;
-size_t tokens_size = 0;
-
-void tokenize(char *source, struct Token tokens[])
+void tokenize(char *source, TokenList *token_list)
 {
     int i = 0;
     size_t source_length = strlen(source);
@@ -88,41 +55,33 @@ void tokenize(char *source, struct Token tokens[])
         char c = source[i];
         if (c == '(')
         {
-            token.tokenType = TOKEN_L_BRACKET;
-            token.tokenVal.charVal = c;
-            tokens[tokens_size] = token;
-            tokens_size += 1;
+            token.token_type = TOKEN_L_BRACKET;
+            token.token_val.char_val = c;
+            add_token(token, token_list);
             i += 1;
             continue;
         }
         if (c == ')')
         {
-            token.tokenType = TOKEN_R_BRACKET;
-            token.tokenVal.charVal = c;
-            tokens[tokens_size] = token;
-
-            tokens_size += 1;
-
+            token.token_type = TOKEN_R_BRACKET;
+            token.token_val.char_val = c;
+            add_token(token, token_list);
             i += 1;
             continue;
         }
         if (c == '+')
         {
-            token.tokenType = TOKEN_PLUS;
-            token.tokenVal.charVal = c;
-            tokens[tokens_size] = token;
-
-            tokens_size += 1;
+            token.token_type = TOKEN_PLUS;
+            token.token_val.char_val = c;
+            add_token(token, token_list);
             i += 1;
             continue;
         }
         if (c == '*')
         {
-            token.tokenType = TOKEN_MULTIPLY;
-            token.tokenVal.charVal = c;
-            tokens[tokens_size] = token;
-
-            tokens_size += 1;
+            token.token_type = TOKEN_MULTIPLY;
+            token.token_val.char_val = c;
+            add_token(token, token_list);
             i += 1;
             continue;
         }
@@ -152,11 +111,10 @@ void tokenize(char *source, struct Token tokens[])
             }
             // Should be handled differently as
             // a number can consist of more than one character
-            token.tokenType = TOKEN_INT;
-            token.tokenVal.intVal = atoi(intChars);
-            tokens[tokens_size] = token;
+            token.token_type = TOKEN_INT;
+            token.token_val.int_val = atoi(intChars);
+            add_token(token, token_list);
 
-            tokens_size += 1;
             continue;
         }
 
@@ -170,56 +128,16 @@ void tokenize(char *source, struct Token tokens[])
         exit(EXIT_FAILURE);
     }
 
-    struct Token token;
-    token.tokenType = TOKEN_EOF;
-    token.tokenVal.charVal = '\0';
-    tokens[tokens_size] = token;
-
-    tokens_size += 1;
+    Token token;
+    token.token_type = TOKEN_EOF;
+    token.token_val.char_val = '\0';
+    add_token(token, token_list);
 }
 
-struct Token current_token()
+int parse_P(TokenList *token_list)
 {
-    size_t next_index = current_pos + 1;
-    if (next_index < tokens_size)
-    {
-        struct Token token = tokens[++current_pos];
-        return token;
-    }
-    else
-    {
-        printf("Consumed all collected tokens.\n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-/** Makes the current token be reconsidered in the next call to `current_token`, */
-void putback_token()
-{
-    current_pos -= 1;
-}
-
-/** Calls `current_token` to retrieve the next token, and check if it matches the type given.
- * Returns `TRUE` if it matches, and `FALSE` otherwise.
- */
-boolean expect_token(token_t token_type)
-{
-    struct Token other = current_token();
-    if (token_type == other.tokenType)
-    {
-        return TRUE;
-    }
-    else
-    {
-        putback_token(other);
-        return FALSE;
-    }
-}
-
-int parse_P()
-{
-    int e = parse_E();
-    if (expect_token(TOKEN_EOF) == TRUE)
+    int e = parse_E(token_list);
+    if (expect_token(TOKEN_EOF, token_list) == TRUE)
     {
         return e;
     }
@@ -230,11 +148,11 @@ int parse_P()
     }
 }
 
-int parse_E()
+int parse_E(TokenList *token_list)
 {
-    int t = parse_T();
-    ParseVal e_prime = parse_E_prime();
-    if (e_prime.isEpsilon == FALSE)
+    int t = parse_T(token_list);
+    ParseVal e_prime = parse_E_prime(token_list);
+    if (e_prime.is_epsilon == FALSE)
     {
         return t + e_prime.val;
     }
@@ -244,15 +162,15 @@ int parse_E()
     }
 }
 
-ParseVal parse_E_prime()
+ParseVal parse_E_prime(TokenList *token_list)
 {
-    struct Token t = current_token();
-    if (t.tokenType == TOKEN_PLUS)
+    struct Token t = current_token(token_list);
+    if (t.token_type == TOKEN_PLUS)
     {
-        int t = parse_T();
-        ParseVal e_prime = parse_E_prime();
+        int t = parse_T(token_list);
+        ParseVal e_prime = parse_E_prime(token_list);
 
-        if (e_prime.isEpsilon == FALSE)
+        if (e_prime.is_epsilon == FALSE)
         {
             return (ParseVal){FALSE, t + e_prime.val};
         }
@@ -263,16 +181,16 @@ ParseVal parse_E_prime()
     }
     else
     {
-        putback_token(t);
+        putback_token(token_list);
         return (ParseVal){TRUE, 0};
     }
 }
 
-int parse_T()
+int parse_T(TokenList *token_list)
 {
-    int f = parse_F();
-    ParseVal t_prime = parse_T_prime();
-    if (t_prime.isEpsilon == FALSE)
+    int f = parse_F(token_list);
+    ParseVal t_prime = parse_T_prime(token_list);
+    if (t_prime.is_epsilon == FALSE)
     {
         return f * t_prime.val;
     }
@@ -282,14 +200,14 @@ int parse_T()
     }
 }
 
-ParseVal parse_T_prime()
+ParseVal parse_T_prime(TokenList *token_list)
 {
-    struct Token t = current_token();
-    if (t.tokenType == TOKEN_MULTIPLY)
+    struct Token t = current_token(token_list);
+    if (t.token_type == TOKEN_MULTIPLY)
     {
-        int f = parse_F();
-        ParseVal t_prime = parse_T_prime();
-        if (t_prime.isEpsilon == FALSE)
+        int f = parse_F(token_list);
+        ParseVal t_prime = parse_T_prime(token_list);
+        if (t_prime.is_epsilon == FALSE)
         {
             ParseVal parseVal = {FALSE, f * t_prime.val};
             return parseVal;
@@ -301,18 +219,18 @@ ParseVal parse_T_prime()
     }
     else
     {
-        putback_token(t);
+        putback_token(token_list);
         return (ParseVal){TRUE, 0};
     }
 }
 
-int parse_F()
+int parse_F(TokenList *token_list)
 {
-    struct Token t = current_token();
-    if (t.tokenType == TOKEN_L_BRACKET)
+    struct Token t = current_token(token_list);
+    if (t.token_type == TOKEN_L_BRACKET)
     {
-        int e = parse_E();
-        if (expect_token(TOKEN_R_BRACKET))
+        int e = parse_E(token_list);
+        if (expect_token(TOKEN_R_BRACKET, token_list))
         {
             return e;
         }
@@ -322,14 +240,30 @@ int parse_F()
             exit(EXIT_FAILURE);
         }
     }
-    else if (t.tokenType == TOKEN_INT)
+    else if (t.token_type == TOKEN_INT)
     {
-        int value = t.tokenVal.intVal;
+        int value = t.token_val.int_val;
         return value;
     }
     else
     {
-        printf("Parse error: unexpected token %c\n", t.tokenVal);
+        printf("Parse error: unexpected token %c\n", t.token_val);
         exit(EXIT_FAILURE);
     }
+}
+
+void evaluate(char *cmdline)
+{
+    if (strcmp(cmdline, "quit\n") == 0)
+    {
+        exit(EXIT_SUCCESS);
+    }
+
+    TokenList list;
+    list.size = 0;
+    list.current_position = 0;
+
+    tokenize(cmdline, &list);
+    int result = parse_P(&list);
+    printf("%d\n", result);
 }
