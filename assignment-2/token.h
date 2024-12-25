@@ -8,7 +8,9 @@
 #define MAX_TOKENS 256
 #define MAX_INT_LENGTH 10
 
-/** Can be either TRUE (1) or FALSE (0) */
+/** `boolean` should be either TRUE (1) or FALSE (0).
+ * This is the intended usage of this `int` alias,
+ * but it is not enforced by the compiler. */
 typedef int boolean;
 
 enum TokenType
@@ -21,18 +23,32 @@ enum TokenType
     TOKEN_INT
 };
 
+/** `TokenVal` stores the value of a token. The union will contain an
+ * integer value (stored in int_val) if we encounter an integer token,
+ * or a char (stored in char_val) when we encounter
+ * an arithmetic sign, a bracket, or EOF (in wich case the value stored)
+ * in char_val would be the null termination character '\0'
+ */
 union TokenVal
 {
     int int_val;
     char char_val;
 };
 
+/** `Token` represents allowable symbols of our grammar
+ * for arithmetic experssions.
+ * (see [`recursive_descent.h`](recursive_descent.h) for the grammar)
+ */
 typedef struct Token
 {
     enum TokenType token_type;
     union TokenVal token_val;
 } Token;
 
+/** `TokenList` brings together the list storing the token, together with
+ * the number of elements in the token (`size`) and the position of the token
+ * to be considered (`current_position`)
+ */
 typedef struct TokenList
 {
     Token tokens[MAX_TOKENS];
@@ -46,6 +62,11 @@ void add_token(Token token, TokenList *token_list)
     token_list->size += 1;
 }
 
+/** `current_token` returns the current token under consideration, and
+ * increments the `current_position` attribute of `token_list`, allowing
+ * the next token to be considered.
+ * It exits with failure if there are no more tokens to consider.
+ */
 Token current_token(TokenList *token_list)
 {
     size_t next_index = token_list->current_position + 1;
@@ -62,7 +83,7 @@ Token current_token(TokenList *token_list)
     }
 }
 
-/** Makes the current token be reconsidered in the next call to `current_token`, */
+/** Makes the previous current token be reconsidered in the next call to `current_token`, */
 void putback_token(TokenList *token_list)
 {
     token_list->current_position -= 1;
@@ -85,6 +106,10 @@ boolean expect_token(enum TokenType token_type, TokenList *token_list)
     }
 }
 
+/** `tokenize` takes the string represented by `source`, derives `Token`s
+ * from them and updates `token_list` as each token is derived.
+ * The routine exits with failure if an invalid symbol is encountered
+ */
 void tokenize(char *source, TokenList *token_list)
 {
     int i = 0;
