@@ -176,8 +176,6 @@ void tokenize(char *source, TokenList *token_list)
 
                 c = source[i];
             }
-            // Should be handled differently as
-            // a number can consist of more than one character
             token.token_type = TOKEN_INT;
             token.token_val.int_val = atoi(intChars);
             add_token(token, token_list);
