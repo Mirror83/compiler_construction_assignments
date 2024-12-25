@@ -20,21 +20,31 @@
  * F - Factor
  *
  * The grammar above is an LL(1) grammar, suitable for recursive descent parsing.
+ *
+ * The routines are named according to the production they parse.
+ * They move through the token list as needed to do so.
  */
 
 #include "token.h"
 
+/** `ParseVal` is the return type for productions that can produce ε return a.
+ * Whether or not ε was produced*/
 typedef struct ParseVal
 {
     boolean is_epsilon;
-    int val; // If is_epsilon is TRUE, the value here does not matter
+    int val; // If `is_epsilon` is TRUE, the value here does not matter
 } ParseVal;
 
 int parse_P(TokenList *token_list);
+
 int parse_E(TokenList *token_list);
+
 ParseVal parse_E_prime(TokenList *token_list);
+
 int parse_T(TokenList *token_list);
+
 ParseVal parse_T_prime(TokenList *token_list);
+
 int parse_F(TokenList *token_list);
 
 int parse_P(TokenList *token_list)
@@ -153,20 +163,4 @@ int parse_F(TokenList *token_list)
         printf("Parse error: unexpected token %c\n", t.token_val);
         exit(EXIT_FAILURE);
     }
-}
-
-void evaluate(char *cmdline)
-{
-    if (strcmp(cmdline, "quit\n") == 0)
-    {
-        exit(EXIT_SUCCESS);
-    }
-
-    TokenList list;
-    list.size = 0;
-    list.current_position = 0;
-
-    tokenize(cmdline, &list);
-    int result = parse_P(&list);
-    printf("%d\n", result);
 }
