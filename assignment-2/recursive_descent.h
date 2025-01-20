@@ -25,7 +25,7 @@
  * They move through the token list as needed to do so.
  */
 
-#include "token.h"
+#include "recursive_token.h"
 
 /** `ParseVal` is the return type for productions that can produce ε return a.
  * Whether or not ε was produced*/
